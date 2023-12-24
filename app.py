@@ -41,7 +41,7 @@ def analyze_stock(stock_data, cpi_data, expected_inflation):
     adjusted_correlation = correlation_close_cpi + 0.1 * expected_inflation  # You can adjust the multiplier as needed
     st.write(f"Adjusted Correlation with Expected Inflation ({expected_inflation}): {adjusted_correlation}")
 
-    return adjusted_correlation
+    return correlation_close_cpi, adjusted_correlation
 
 # Streamlit UI
 st.title("Stock-CPI Correlation Analysis with Expected Inflation")
@@ -51,15 +51,33 @@ train_model_button = st.button("Train Model")
 if train_model_button:
     st.write(f"Training model with Expected Inflation: {expected_inflation}...")
     
-    all_correlations = []
+    actual_correlations = []
+    expected_correlations = []
+    stock_names = []
+
     for stock_file in stock_files:
         st.write(f"\nTraining for {stock_file}...")
         selected_stock_data = pd.read_excel(os.path.join(stock_folder, stock_file))
         selected_stock_data.name = stock_file  # Assign a name to the stock_data for reference
-        correlation = analyze_stock(selected_stock_data, cpi_data, expected_inflation)
-        all_correlations.append((stock_file, correlation))
+        actual_corr, expected_corr = analyze_stock(selected_stock_data, cpi_data, expected_inflation)
+        
+        actual_correlations.append(actual_corr)
+        expected_correlations.append(expected_corr)
+        stock_names.append(stock_file)
 
-    # Display overall summary
-    st.write("\nOverall Summary:")
-    for stock, correlation in all_correlations:
-        st.write(f"{stock}: {correlation}")
+    # Display overall summary in a table
+    summary_data = {
+        'Stock': stock_names,
+        'Actual Correlation': actual_correlations,
+        f'Expected Correlation (Inflation={expected_inflation})': expected_correlations
+    }
+    summary_df = pd.DataFrame(summary_data)
+    st.write("\nCorrelation Summary:")
+    st.table(summary_df)
+
+    # Display overall summary in a column format
+    st.write("\nCorrelation Summary (Column Format):")
+    for stock, actual_corr, expected_corr in zip(stock_names, actual_correlations, expected_correlations):
+        st.write(f"{stock}:")
+        st.write(f"  - Actual Correlation: {actual_corr}")
+        st.write(f"  - Expected Correlation (Inflation={expected_inflation}): {expected_corr}")
