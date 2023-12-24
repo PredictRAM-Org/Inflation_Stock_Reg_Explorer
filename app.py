@@ -22,10 +22,10 @@ def analyze_stock(stock_data, cpi_data):
     # Merge stock and CPI data on Date
     merged_data = pd.merge(stock_data, cpi_data, left_index=True, right_index=True, how='inner')
     
-    # Calculate CPI change
+    # Handle NaN values in CPI column
     merged_data['CPI Change'] = merged_data['CPI'].pct_change()
-    
-    # Drop NaN values
+
+    # Drop NaN values after calculating percentage change
     merged_data = merged_data.dropna()
 
     # Show correlation between 'Close' column and 'CPI Change'
