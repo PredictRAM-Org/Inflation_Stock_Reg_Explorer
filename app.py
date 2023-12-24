@@ -30,6 +30,10 @@ def analyze_stock(stock_data, cpi_data):
     plt.figure(figsize=(10, 6))
     plt.plot(merged_data.index, merged_data['Close'], label='Close Price', color='blue')
     plt.plot(merged_data.index, merged_data['CPI'], label='CPI', color='red')
+    
+    # Format x-axis as dates
+    plt.gca().xaxis_date()
+
     plt.xlabel('Date')
     plt.ylabel('Value')
     plt.title('Line Chart - Close Price and CPI')
