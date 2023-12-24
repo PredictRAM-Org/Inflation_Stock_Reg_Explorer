@@ -28,30 +28,11 @@ def analyze_stock(stock_data, cpi_data):
     # Drop NaN values
     merged_data = merged_data.dropna()
 
-    # Features and target
-    X = merged_data[['CPI']]
-    y = merged_data['CPI Change']
+    # Show correlation between 'Close' column and 'CPI Change'
+    correlation_close_cpi = merged_data['Close'].corr(merged_data['CPI Change'])
+    st.write(f"Correlation between 'Close' and 'CPI Change' for {stock_data.name}: {correlation_close_cpi}")
 
-    # Train linear regression model
-    model = LinearRegression()
-    model.fit(X, y)
-
-    # Show correlation with each stock
-    correlation_results = {}
-    for column in merged_data.columns[:-2]:  # Exclude 'CPI Change' and 'CPI' columns
-        stock_column = merged_data[column]
-        correlation = stock_column.corr(merged_data['CPI Change'])
-        correlation_results[column] = correlation
-
-    # Display results
-    st.write("\nCorrelation with CPI Change:")
-    for stock, correlation in correlation_results.items():
-        st.write(f"{stock}: {correlation}")
-
-    # Show correlation heatmap
-    correlation_matrix = merged_data.corr()
-    sns.heatmap(correlation_matrix, annot=True, cmap="coolwarm")
-    st.pyplot()
+    return correlation_close_cpi
 
 # Streamlit UI
 st.title("Stock-CPI Correlation Analysis")
@@ -60,7 +41,15 @@ train_model_button = st.button("Train Model")
 if train_model_button:
     st.write("Training model...")
 
+    all_correlations = []
     for stock_file in stock_files:
-        st.write(f"\nCorrelation for {stock_file}:")
+        st.write(f"\nTraining for {stock_file}...")
         selected_stock_data = pd.read_excel(os.path.join(stock_folder, stock_file))
-        analyze_stock(selected_stock_data, cpi_data)
+        selected_stock_data.name = stock_file  # Assign a name to the stock_data for reference
+        correlation = analyze_stock(selected_stock_data, cpi_data)
+        all_correlations.append((stock_file, correlation))
+
+    # Display overall summary
+    st.write("\nOverall Summary:")
+    for stock, correlation in all_correlations:
+        st.write(f"{stock}: {correlation}")
