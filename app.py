@@ -1,10 +1,8 @@
 import os
 import pandas as pd
 import streamlit as st
+from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.svm import SVR
-from sklearn.neural_network import MLPRegressor
 from sklearn.metrics import mean_squared_error
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -18,8 +16,8 @@ cpi_data.set_index('Date', inplace=True)
 stock_folder = "stock_folder"
 stock_files = [f for f in os.listdir(stock_folder) if f.endswith(".xlsx")]
 
-# Function to calculate correlation and build regression model
-def analyze_stock(stock_data, cpi_data):
+# Function to calculate correlation and build linear regression model
+def analyze_stock(stock_data, cpi_data, future_inflation):
     stock_data['Date'] = pd.to_datetime(stock_data['Date'])
     stock_data.set_index('Date', inplace=True)
     
@@ -33,24 +31,28 @@ def analyze_stock(stock_data, cpi_data):
     merged_data = merged_data.dropna()
 
     # Features and target
-    X = merged_data.drop(['CPI Change'], axis=1)
+    X = merged_data[['CPI']]
     y = merged_data['CPI Change']
 
-    # Split data into training and testing sets
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    # Train linear regression model
+    model = LinearRegression()
+    model.fit(X, y)
 
-    # Train models
-    models = {
-        'Random Forest': RandomForestRegressor(),
-        'SVM': SVR(),
-        'Neural Network': MLPRegressor()
-    }
+    # Predict future inflation
+    future_inflation_prediction = model.predict([[future_inflation]])
+    st.write(f"Predicted CPI Change for Future Inflation ({future_inflation}): {future_inflation_prediction[0]}")
 
-    for name, model in models.items():
-        model.fit(X_train, y_train)
-        y_pred = model.predict(X_test)
-        mse = mean_squared_error(y_test, y_pred)
-        st.write(f"{name} Mean Squared Error: {mse}")
+    # Show correlation with each stock
+    correlation_results = {}
+    for column in merged_data.columns[:-2]:  # Exclude 'CPI Change' and 'CPI' columns
+        stock_column = merged_data[column]
+        correlation = stock_column.corr(merged_data['CPI Change'])
+        correlation_results[column] = correlation
+
+    # Display results
+    st.write("\nCorrelation with CPI Change:")
+    for stock, correlation in correlation_results.items():
+        st.write(f"{stock}: {correlation}")
 
     # Show correlation heatmap
     correlation_matrix = merged_data.corr()
@@ -58,9 +60,10 @@ def analyze_stock(stock_data, cpi_data):
     st.pyplot()
 
 # Streamlit UI
-st.title("Stock-CPI Correlation Analysis")
+st.title("Stock-CPI Correlation and Prediction Analysis")
 selected_stock = st.selectbox("Select Stock", stock_files)
+future_inflation_input = st.number_input("Enter Expected Future Inflation:", min_value=0.0, step=0.01)
 
 # Load selected stock data
 selected_stock_data = pd.read_excel(os.path.join(stock_folder, selected_stock))
-analyze_stock(selected_stock_data, cpi_data)
+analyze_stock(selected_stock_data, cpi_data, future_inflation_input)
