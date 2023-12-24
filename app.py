@@ -23,6 +23,11 @@ def analyze_stock(stock_data, cpi_data):
     merged_data = pd.merge(stock_data, cpi_data, left_index=True, right_index=True, how='inner')
     
     # Handle NaN values in CPI column
+    if merged_data['CPI'].isnull().any():
+        st.write(f"Warning: NaN values found in 'CPI' column for {stock_data.name}. Dropping NaN values.")
+        merged_data = merged_data.dropna(subset=['CPI'])
+
+    # Calculate CPI change
     merged_data['CPI Change'] = merged_data['CPI'].pct_change()
 
     # Drop NaN values after calculating percentage change
