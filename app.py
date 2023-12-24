@@ -22,28 +22,22 @@ def analyze_stock(stock_data, cpi_data):
     # Merge stock and CPI data on Date
     merged_data = pd.merge(stock_data, cpi_data, left_index=True, right_index=True, how='inner')
     
-    # Calculate percentage change
-    merged_data['Close % Change'] = merged_data['Close'].pct_change() * 100
-    merged_data['CPI % Change'] = merged_data['CPI'].pct_change() * 100
-    
     # Drop NaN values
     merged_data = merged_data.dropna()
 
-    # Show percentage change comparison
-    st.write("\nPercentage Change Comparison:")
-    st.dataframe(merged_data[['Close % Change', 'CPI % Change']])
-
-    # Show scatter plot
-    st.write("\nScatter Plot - Percentage Change Comparison:")
+    # Show line chart with close price in blue and CPI in red
+    st.write("\nLine Chart - Close Price (Blue) and CPI (Red):")
     plt.figure(figsize=(10, 6))
-    sns.scatterplot(x='CPI % Change', y='Close % Change', data=merged_data)
-    plt.xlabel('CPI % Change')
-    plt.ylabel('Close % Change')
-    plt.title('Scatter Plot - Percentage Change Comparison')
+    plt.plot(merged_data.index, merged_data['Close'], label='Close Price', color='blue')
+    plt.plot(merged_data.index, merged_data['CPI'], label='CPI', color='red')
+    plt.xlabel('Date')
+    plt.ylabel('Value')
+    plt.title('Line Chart - Close Price and CPI')
+    plt.legend()
     st.pyplot()
 
 # Streamlit UI
-st.title("Stock-CPI Percentage Change Comparison")
+st.title("Stock-CPI Line Chart - Close Price and CPI")
 selected_stock = st.selectbox("Select Stock", stock_files)
 
 # Load selected stock data
