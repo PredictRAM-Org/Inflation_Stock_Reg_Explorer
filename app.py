@@ -42,16 +42,27 @@ def analyze_stock(stock_data, cpi_data, future_inflation):
     future_inflation_prediction = model.predict([[future_inflation]])
     st.write(f"Predicted CPI Change for Future Inflation ({future_inflation}): {future_inflation_prediction[0]}")
 
-    # Show correlation with each stock
-    correlation_results = {}
+    # Show correlation with actual CPI Change
+    correlation_results_actual = {}
     for column in merged_data.columns[:-2]:  # Exclude 'CPI Change' and 'CPI' columns
         stock_column = merged_data[column]
         correlation = stock_column.corr(merged_data['CPI Change'])
-        correlation_results[column] = correlation
+        correlation_results_actual[column] = correlation
+
+    # Show correlation with predicted CPI Change
+    correlation_results_predicted = {}
+    for column in merged_data.columns[:-2]:  # Exclude 'CPI Change' and 'CPI' columns
+        stock_column = merged_data[column]
+        correlation = stock_column.corr(pd.Series(future_inflation_prediction[0], index=stock_column.index))
+        correlation_results_predicted[column] = correlation
 
     # Display results
-    st.write("\nCorrelation with CPI Change:")
-    for stock, correlation in correlation_results.items():
+    st.write("\nCorrelation with Actual CPI Change:")
+    for stock, correlation in correlation_results_actual.items():
+        st.write(f"{stock}: {correlation}")
+
+    st.write("\nCorrelation with Predicted CPI Change:")
+    for stock, correlation in correlation_results_predicted.items():
         st.write(f"{stock}: {correlation}")
 
     # Show correlation heatmap
